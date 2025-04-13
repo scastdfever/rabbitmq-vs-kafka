@@ -31,7 +31,7 @@ def main() -> None:
         connection = pika.BlockingConnection(connection_parameters)
         channel = connection.channel()
 
-        channel.queue_declare(queue=QUEUE_NAME, durable=True)
+        channel.queue_declare(queue=QUEUE_NAME)
         channel.basic_consume(queue=QUEUE_NAME, on_message_callback=callback, auto_ack=True)
 
         print(" [*] Waiting for messages. To exit press CTRL+C")
