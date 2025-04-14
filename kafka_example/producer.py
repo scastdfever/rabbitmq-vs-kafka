@@ -34,8 +34,8 @@ class Message:
 
 class KafkaMessageSerializer:
     @staticmethod
-    def serialize_message(message: dict[str, Any]) -> bytes:
-        return json.dumps(message).encode("utf-8")
+    def serialize_message(message: Message) -> bytes:
+        return json.dumps(message.to_dict()).encode("utf-8")
 
 
 class KafkaProducerWrapper:
@@ -87,7 +87,7 @@ class KafkaProducerWrapper:
 
     def send_message(self, message: Message) -> None:
         try:
-            self.producer.send(TOPIC_NAME, message.to_dict())
+            self.producer.send(TOPIC_NAME, message)
             logger.info(f"Sent message {message.id}: {message.content}")
         except Exception as e:
             logger.error(f"Error sending message: {e}")
@@ -104,11 +104,7 @@ def main() -> None:
 
     try:
         while producer.running:
-            message = Message(
-                id=message_id,
-                content=f"Message {message_id}",
-                timestamp=time.time(),
-            )
+            message = Message(id=message_id, content=f"Message {message_id}", timestamp=time.time())
             producer.send_message(message)
             message_id += 1
             time.sleep(1)

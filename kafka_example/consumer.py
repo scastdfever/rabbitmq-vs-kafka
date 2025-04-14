@@ -20,6 +20,7 @@ def main() -> None:
         consumer = KafkaConsumer(
             TOPIC_NAME,
             bootstrap_servers=KAFKA_SERVERS,
+            auto_offset_reset="earliest",
             value_deserializer=KafkaMessageDeserializer.deserialize_message,
         )
 

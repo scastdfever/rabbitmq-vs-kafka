@@ -32,6 +32,11 @@ class Message:
             "timestamp": self.timestamp,
         }
 
+class RabbitMQMessageSerializer:
+    @staticmethod
+    def serialize_message(message: Message) -> bytes:
+        return json.dumps(message.to_dict()).encode("utf-8")
+
 
 class RabbitMQProducer:
     def __init__(self) -> None:
@@ -58,7 +63,7 @@ class RabbitMQProducer:
         signal.signal(signal.SIGINT, self.__handle_shutdown)
         signal.signal(signal.SIGTERM, self.__handle_shutdown)
 
-    def __handle_shutdown(self, signum: int, frame: Any) -> None:
+    def __handle_shutdown(self, _signum: int, _frame: Any) -> None:
         logger.info("Shutting down producer...")
         self.running = False
 
@@ -67,7 +72,7 @@ class RabbitMQProducer:
             self.channel.basic_publish(
                 exchange="",
                 routing_key=QUEUE_NAME,
-                body=json.dumps(message.to_dict()),
+                body=RabbitMQMessageSerializer.serialize_message(message),
             )
 
             logger.info(f"Sent message {message.id}: {message.content}")
@@ -86,11 +91,7 @@ def main() -> None:
 
     try:
         while producer.running:
-            message = Message(
-                id=message_id,
-                content=f"Message {message_id}",
-                timestamp=time.time(),
-            )
+            message = Message(id=message_id, content=f"Message {message_id}", timestamp=time.time())
             producer.send_message(message)
             message_id += 1
             time.sleep(1)
