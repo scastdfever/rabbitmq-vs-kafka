@@ -1,17 +1,10 @@
-import json
-from typing import Any
-
 import pika
+
+from shared.message_deserializer import MessageDeserializer
 
 RABBITMQ_HOST: str = "localhost"
 RABBITMQ_PORT: int = 5672
 QUEUE_NAME: str = "test-queue"
-
-
-class RabbitMQMessageDeserializer:
-    @staticmethod
-    def deserialize_message(message_bytes: bytes) -> dict[str, Any]:
-        return json.loads(message_bytes)
 
 
 def callback(
@@ -20,7 +13,7 @@ def callback(
     _properties: pika.spec.BasicProperties,
     body: bytes,
 ) -> None:
-    message = RabbitMQMessageDeserializer.deserialize_message(body)
+    message = MessageDeserializer.deserialize_message(body)
     print(f" [x] Received {message}")
 
 

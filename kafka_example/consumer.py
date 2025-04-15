@@ -1,16 +1,9 @@
 from kafka import KafkaConsumer
-import json
-from typing import Any
 
+from shared.message_deserializer import MessageDeserializer
 
 KAFKA_SERVERS: list[str] = ["localhost:9092"]
 TOPIC_NAME: str = "test-topic"
-
-
-class KafkaMessageDeserializer:
-    @staticmethod
-    def deserialize_message(message_bytes: bytes) -> dict[str, Any]:
-        return json.loads(message_bytes.decode("utf-8"))
 
 
 def main() -> None:
@@ -21,7 +14,7 @@ def main() -> None:
             TOPIC_NAME,
             bootstrap_servers=KAFKA_SERVERS,
             auto_offset_reset="earliest",
-            value_deserializer=KafkaMessageDeserializer.deserialize_message,
+            value_deserializer=MessageDeserializer.deserialize_message,
         )
 
         print(" [*] Waiting for messages. To exit press CTRL+C")

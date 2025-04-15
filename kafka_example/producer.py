@@ -1,41 +1,22 @@
+import logging
+import random
+import signal
+import time
+from typing import Any
+
 from kafka import KafkaProducer
 from kafka.admin import KafkaAdminClient, NewTopic
-import json
-import time
-import signal
-from typing import Any
-from dataclasses import dataclass
-import logging
 
+from shared.message import Message
+from shared.message_serializer import MessageSerializer
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
 logger = logging.getLogger(__name__)
-
 
 KAFKA_SERVERS: list[str] = ["localhost:9092"]
 TOPIC_NAME: str = "test-topic"
 NUM_PARTITIONS: int = 1
 REPLICATION_FACTOR: int = 1
-
-
-@dataclass
-class Message:
-    id: int
-    content: str
-    timestamp: float
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "id": self.id,
-            "content": self.content,
-            "timestamp": self.timestamp,
-        }
-
-
-class KafkaMessageSerializer:
-    @staticmethod
-    def serialize_message(message: Message) -> bytes:
-        return json.dumps(message.to_dict()).encode("utf-8")
 
 
 class KafkaProducerWrapper:
@@ -70,7 +51,7 @@ class KafkaProducerWrapper:
         try:
             self.producer = KafkaProducer(
                 bootstrap_servers=KAFKA_SERVERS,
-                value_serializer=KafkaMessageSerializer.serialize_message,
+                value_serializer=MessageSerializer.serialize_message,
             )
             logger.info("Successfully connected to Kafka")
         except Exception as e:
@@ -104,9 +85,14 @@ def main() -> None:
 
     try:
         while producer.running:
-            message = Message(id=message_id, content=f"Message {message_id}", timestamp=time.time())
-            producer.send_message(message)
-            message_id += 1
+            num_messages = random.randint(1, 10)
+            logger.info(f"Producing {num_messages} messages")
+
+            for _ in range(num_messages):
+                message = Message(id=message_id, content=f"Message {message_id}", timestamp=time.time())
+                producer.send_message(message)
+                message_id += 1
+
             time.sleep(1)
     except Exception as e:
         logger.error(f"Error in main: {e}")

@@ -1,41 +1,23 @@
-import json
-import time
-import signal
-from typing import Any
-from dataclasses import dataclass
 import logging
+import signal
+import time
+import random
+from typing import Any
 
 import pika
 from pika.exceptions import AMQPError
 
+from shared.message import Message
+from shared.message_serializer import MessageSerializer
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
 logger = logging.getLogger(__name__)
-
 
 RABBITMQ_HOST: str = "localhost"
 RABBITMQ_PORT: int = 5672
 RABBITMQ_USER: str = "guest"
 RABBITMQ_PASS: str = "guest"
 QUEUE_NAME: str = "test-queue"
-
-
-@dataclass
-class Message:
-    id: int
-    content: str
-    timestamp: float
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "id": self.id,
-            "content": self.content,
-            "timestamp": self.timestamp,
-        }
-
-class RabbitMQMessageSerializer:
-    @staticmethod
-    def serialize_message(message: Message) -> bytes:
-        return json.dumps(message.to_dict()).encode("utf-8")
 
 
 class RabbitMQProducer:
@@ -72,7 +54,7 @@ class RabbitMQProducer:
             self.channel.basic_publish(
                 exchange="",
                 routing_key=QUEUE_NAME,
-                body=RabbitMQMessageSerializer.serialize_message(message),
+                body=MessageSerializer.serialize_message(message),
             )
 
             logger.info(f"Sent message {message.id}: {message.content}")
@@ -91,9 +73,14 @@ def main() -> None:
 
     try:
         while producer.running:
-            message = Message(id=message_id, content=f"Message {message_id}", timestamp=time.time())
-            producer.send_message(message)
-            message_id += 1
+            num_messages = random.randint(1, 10)
+            logger.info(f"Producing {num_messages} messages")
+
+            for _ in range(num_messages):
+                message = Message(id=message_id, content=f"Message {message_id}", timestamp=time.time())
+                producer.send_message(message)
+                message_id += 1
+
             time.sleep(1)
     except Exception as e:
         logger.error(f"Error in main: {e}")
