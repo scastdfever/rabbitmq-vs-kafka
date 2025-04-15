@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any
 
 
-@dataclass
+@dataclass(frozen=True)
 class Message:
     id: int
     content: str
